@@ -14,8 +14,10 @@
     "@fortawesome/free-solid-svg-icons": "^6.6.0",
     "@fortawesome/vue-fontawesome": "^3.0.8",
     "@stripe/stripe-js": "^4.4.0",
+    "axios": "^1.7.7",
     "firebase": "^10.12.2",
     "flowbite": "^2.5.1",
+    "lodash": "^4.17.21",
     "simple-datatables": "^9.1.0",
     "vue": "^3.4.29",
     "vue-router": "^4.0.13"

@@ -17,10 +17,11 @@ import { library } from '@fortawesome/fontawesome-svg-core'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 
 /* import specific icons */
-import { faHouse, faChevronRight, faChevronLeft, faXmark} from '@fortawesome/free-solid-svg-icons'
+import { faHouse, faChevronRight, faChevronLeft, faXmark, faGamepad} from '@fortawesome/free-solid-svg-icons'
+import { faBell } from '@fortawesome/free-regular-svg-icons';
 
 /* add icons to the library */
-library.add(faHouse, faChevronRight, faChevronLeft, faXmark)
+library.add(faHouse, faChevronRight, faChevronLeft, faXmark, faBell, faGamepad)
 
 /* create the app instance */
 const app = createApp(App);

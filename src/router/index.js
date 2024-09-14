@@ -5,6 +5,10 @@ import SignIn from '../components/views/LoginPage.vue'
 import SignUp from '../components/views/RegisterPage.vue'
 import Details from '../components/views/DetailGamesView.vue'
 import Cart from '../components/views/CartPage.vue'
+import DashboardAdmin from '../views/adminviews/Dashboardviews.vue'
+import AddDataAdmin from '../views/adminviews/AddDataViews.vue'
+import CheckoutAdmin from '../views/adminviews/CheckoutVIews.vue'
+
 
 const routes = [
   {
@@ -41,6 +45,21 @@ const routes = [
     path: '/cart',
     name: 'Cart',
     component: Cart,
+  },
+  {
+    path: '/dashboard',
+    name: 'dashboardviews',
+    component: DashboardAdmin,
+  },
+  {
+    path: '/adddata',
+    name: 'adddataviews',
+    component: AddDataAdmin,
+  },
+  {
+    path: '/checkout',
+    name: 'checkoutviews',
+    component: CheckoutAdmin,
   },
 
 
