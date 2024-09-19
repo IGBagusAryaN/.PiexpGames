@@ -8,7 +8,8 @@ import Cart from '../components/views/CartPage.vue'
 import DashboardAdmin from '../views/adminviews/Dashboardviews.vue'
 import AddDataAdmin from '../views/adminviews/AddDataViews.vue'
 import CheckoutAdmin from '../views/adminviews/CheckoutVIews.vue'
-
+import test from '../components/views/testview.vue'
+import ProfilePictureViews from '../components/views/ProfileView.vue'
 
 const routes = [
   {
@@ -61,8 +62,16 @@ const routes = [
     name: 'checkoutviews',
     component: CheckoutAdmin,
   },
-
-
+  {
+    path: '/test',
+    name: 'checkoutviews',
+    component: test,
+  },
+  {
+    path: '/profile',
+    name: 'profilepictureviews',
+    component: ProfilePictureViews,
+  },
 ];
 
 const router = createRouter({

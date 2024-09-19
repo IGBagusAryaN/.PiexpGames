@@ -20,6 +20,7 @@
     "lodash": "^4.17.21",
     "simple-datatables": "^9.1.0",
     "vue": "^3.4.29",
+    "vue-multiselect": "^3.1.0",
     "vue-router": "^4.0.13"
   },
   "devDependencies": {

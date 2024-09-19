@@ -70,6 +70,5 @@ onMounted(() => {
   </script>
   
   <style scoped>
-  /* Tambahan CSS jika diperlukan */
   </style>
   

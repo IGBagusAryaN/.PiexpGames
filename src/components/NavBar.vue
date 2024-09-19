@@ -5,7 +5,11 @@ import Cart from './ImageComponent/CartComponent.vue';
 import { auth } from '../vue-firebase-auth';
 import { RouterLink } from 'vue-router';
 import { useAuth } from '../components/useAuth';
+import ProfileImage from '../components/ProfilePicture.vue';
 
+
+
+const profileImage = ref('');
 const { isLoggedIn, currentUser } = useAuth();
 const isDropdownOpen = ref(false);
 
@@ -56,6 +60,8 @@ function logout() {
           v-on:click="toggleDropdown"
           class="btn px-2 py-1 font-semibold text-[12px] flex items-center"
         >
+        <ProfileImage class="w-7 h-7 rounded-lg me-1" :profileImage="profileImage" :uploadEnabled="false"></ProfileImage>
+        
          <span class="text-[12px] font-semibold">{{ currentUser?.displayName }}</span>
           <svg
             xmlns="http://www.w3.org/2000/svg"

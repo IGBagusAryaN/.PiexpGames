@@ -1,41 +1,58 @@
 <script setup>
-import Logo from './ImageComponent/LogoComponent.vue'
-import Cart from './ImageComponent/CartComponent.vue'
-import { RouterLink, useRouter } from 'vue-router';
-import { ref } from 'vue';
-import { auth } from '../../src/vue-firebase-auth';
-import { signOut, onAuthStateChanged } from 'firebase/auth';
+import { ref, onMounted } from 'vue';
+import axios from 'axios';
 
-const router = useRouter();
-const user = ref(null);
+// State untuk menyimpan daftar games
+const games = ref([]);
+const isLoading = ref(true);
 
-async function signout() {
-  await signOut(auth).then((res) => {
-    router.push('/');
-  }).catch((err) => {
-    console.error('Sign out error', err);
-  });
-}
+// Fetch games
+const fetchGames = async () => {
+  try {
+    const response = await axios.get(
+      'https://firestore.googleapis.com/v1/projects/my-project-1-e56ef/databases/(default)/documents/games'
+    );
+    
+    // Map data dari Firestore ke format yang sesuai
+    games.value = response.data.documents.map(doc => ({
+      id: doc.name.split('/').pop(),
+      title: doc.fields.title.stringValue,
+      description: doc.fields.description.stringValue,
+      image: doc.fields.image.stringValue,
+      price: doc.fields.price.doubleValue
+    }));
+  } catch (error) {
+    console.error('Error fetching games:', error);
+  } finally {
+    isLoading.value = false;
+  }
+};
 
-onAuthStateChanged(auth, (currentUser) => {
-  user.value = currentUser;
+// Fetch data saat komponen dimount
+onMounted(() => {
+  fetchGames();
 });
 </script>
 
 <template>
-    <div class="flex justify-between pt-10 px-32 w-full fixed z-50">
-        <div class="flex items-center gap-10">
-            <Logo/>
-            <div class="flex items-center gap-5">
-                <routerLink to="/" class="home-page font-semibold cursor-pointer text-[12px]  hover:text-indigo-400 active:text-indigo-400">Store</routerLink>
-                <routerLink to="/Search" class="home-page font-semibold cursor-pointer text-[12px]  hover:text-indigo-400 active:text-indigo-400">Games</routerLink>
-                <routerLink to="/" class="home-page font-semibold cursor-pointer text-[12px]  hover:text-indigo-400 active:text-indigo-400">News</routerLink>
-            </div>  
-        </div>
-        <div class="flex items-center gap-5">
-            <div v-if="user">{{user?.email}} <button @click="signout" class="bg-red-500 text-white py-1 px-4 rounded-md">Sign Out</button></div>
-            <Button class=""><Cart/></Button>
-        </div>
+  <div class="pt-24">
+    <h1 class="text-2xl font-bold mb-6">Upcoming Wishlist</h1>
+
+    <div v-if="isLoading">
+      <p>Loading games...</p>
     </div>
-    
+
+    <div v-else class="grid grid-cols-5 gap-6">
+      <div v-for="game in games" :key="game.id" @click="$router.push({ name: 'GameDetail', params: { id: game.id } })" class="cursor-pointer">
+        <img :src="game.image" alt="Game Image" class="rounded-lg w-full h-48 object-cover" v-if="game.image" />
+        <h2 class="font-bold text-lg mt-2">{{ game.title }}</h2>
+        <p class="text-sm text-gray-500">{{ game.description }}</p>
+        <span class="block font-semibold mt-1">IDR {{ game.price.toLocaleString() }}</span>
+      </div>
+    </div>
+  </div>
 </template>
+
+<style scoped>
+/* Styling tambahan jika diperlukan */
+</style>

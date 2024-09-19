@@ -1,7 +1,7 @@
 <template>
     <nintendoIcon
-    :imageWidth="'40px'"
-    :imageHeight="'30px'"
+    :imageWidth="'70px'"
+    :imageHeight="'40px'"
     />
 </template>
 
