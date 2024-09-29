@@ -1,13 +1,21 @@
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { auth } from '../vue-firebase-auth';
+import { getAuth } from "firebase/auth";
+
+export const getCurrentUserId = () => {
+  const auth = getAuth();
+  const user = auth.currentUser;
+  return user ? user.uid : null;
+};
+
 
 export function useAuth() {
-    const isLoggedIn = ref(false);
-    const currentUser = ref(null);
-    const showLoginModal = ref(false);
-    const showPaymentModal = ref(false);
-    const router = useRouter();
+  const isLoggedIn = ref(false);
+  const currentUser = ref(null);
+  const showLoginModal = ref(false);
+  const showPaymentModal = ref(false);
+  const router = useRouter();
     
   onMounted(() => {
     auth.onAuthStateChanged(user => {

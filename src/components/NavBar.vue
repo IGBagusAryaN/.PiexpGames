@@ -1,17 +1,43 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, watch, computed } from 'vue';
 import Logo from './ImageComponent/LogoComponent.vue';
 import Cart from './ImageComponent/CartComponent.vue';
-import { auth } from '../vue-firebase-auth';
-import { RouterLink } from 'vue-router';
+import { auth, db } from '../vue-firebase-auth';
+import { RouterLink, useRouter } from 'vue-router';  
 import { useAuth } from '../components/useAuth';
 import ProfileImage from '../components/ProfilePicture.vue';
+import { doc, getDoc } from 'firebase/firestore';
+import { useCartStore } from '../components/store/cart'; // Import store cart
 
+const cartStore = useCartStore();
 
+// Computed property untuk menghitung jumlah item di keranjang
+const cartItemCount = computed(() => cartStore.itemCount);  // Mengakses getter itemCount
 
 const profileImage = ref('');
 const { isLoggedIn, currentUser } = useAuth();
 const isDropdownOpen = ref(false);
+const displayName = ref('Guest');  // Set default displayName as 'Guest'
+const router = useRouter();
+
+// Fetch user's nickname from Firestore
+const fetchNickname = async (uid) => {
+  const userDocRef = doc(db, 'users', uid);
+  const userDoc = await getDoc(userDocRef);
+  if (userDoc.exists()) {
+    const userData = userDoc.data();
+    displayName.value = userData.nickname || 'Guest';  // Use nickname or fallback to 'Guest'
+  }
+};
+
+// Watch for changes in currentUser and update displayName
+watch(currentUser, (newUser) => {
+  if (newUser) {
+    fetchNickname(newUser.uid);  // Fetch nickname from Firestore
+  } else {
+    displayName.value = 'Guest';  // Reset to Guest when user logs out
+  }
+});
 
 function toggleDropdown() {
   isDropdownOpen.value = !isDropdownOpen.value;
@@ -19,10 +45,11 @@ function toggleDropdown() {
 
 function logout() {
   auth.signOut().then(() => {
-    router.push('/signin');
+    router.push('/signin');  // Redirect to signin page after logout
+  }).catch((error) => {
+    console.error('Logout failed: ', error);  // Handle error during logout
   });
 }
-
 </script>
 
 <template>
@@ -62,7 +89,7 @@ function logout() {
         >
         <ProfileImage class="w-7 h-7 rounded-lg me-1" :profileImage="profileImage" :uploadEnabled="false"></ProfileImage>
         
-         <span class="text-[12px] font-semibold">{{ currentUser?.displayName }}</span>
+         <span class="text-[12px] font-semibold">{{ displayName }}</span> <!-- Use displayName here -->
           <svg
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
@@ -98,7 +125,13 @@ function logout() {
             >Logout</button
           >
         </div>
-        <router-link to="/cart" class=""><Cart /></router-link>
+        <router-link to="/cart" class="relative">
+          <Cart />
+          <!-- Notifikasi hanya ditampilkan jika cartItemCount > 0 -->
+          <span v-if="cartItemCount > 0" class="absolute top-0 right-0 bg-red-500 text-white rounded-full px-2 py-1 text-xs">
+            {{ cartItemCount }}
+          </span>
+        </router-link>
       </div>
     </div>
   </div>

@@ -1,8 +1,10 @@
 <template>
+    <Navbar/>
     <Profile/>
  </template>
    
  <script setup>
-     import Profile from '../ProfilePicture.vue';
+     import Navbar from '../NavBar.vue';
+     import Profile from '../SettingsAcc.vue';
  </script>
  

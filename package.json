@@ -18,10 +18,12 @@
     "firebase": "^10.12.2",
     "flowbite": "^2.5.1",
     "lodash": "^4.17.21",
+    "pinia": "^2.2.2",
     "simple-datatables": "^9.1.0",
     "vue": "^3.4.29",
     "vue-multiselect": "^3.1.0",
-    "vue-router": "^4.0.13"
+    "vue-router": "^4.0.13",
+    "vue-toastification": "^2.0.0-rc.5"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.0.5",

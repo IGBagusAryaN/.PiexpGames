@@ -1,17 +1,57 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter} from 'vue-router';
 import ModalPayment from '../components/ModalPayment.vue'
 import axios from 'axios';
 import Rating from '../components/Ratings.vue'
 import ModalLogin from './ModalLogin.vue';
 import { useAuth } from '../components/useAuth';
+import { useCartStore } from '../components/store/cart';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../vue-firebase-auth';  // Firebase Firestore instance
+
+const cartStore = useCartStore();
+const gameUid = 'gameUid';
 
 const { isLoggedIn, showLoginModal, showPaymentModal } = useAuth();
 const route = useRoute();
+const router = useRouter();
 const gameId = route.params.id;
 const game = ref(null);
 const isLoading = ref(true);
+
+
+const fetchGameData = async (gameUid) => {
+  try {
+    const gameDocRef = doc(db, 'games', gameUid);
+    const gameDoc = await getDoc(gameDocRef);
+    if (gameDoc.exists()) {
+      game.value = gameDoc.data();
+    } else {
+      console.log('No such game exists!');
+    }
+  } catch (error) {
+    console.error("Error fetching game data: ", error);
+  }
+};
+
+const isInCart = (gameId) => {
+  return cartStore.cart.some(item => item.id === gameId);
+};
+
+const addToCart = () => {
+  if (game.value) {
+    cartStore.addToCart(game.value);  // Akses data game dari .value
+  }
+};
+
+const viewCart = () => {
+  router.push('/cart');
+};
+
+onMounted(() => {
+  fetchGameData(gameUid);  // Fetch game data on component mount
+});
 
 
 const fetchGameDetail = async () => {
@@ -295,7 +335,14 @@ const handlePayment = (paymentMethod) => {
               />
               </div>
               <div>
-                <button v-if="isLoggedIn"  type="button" class="text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 font-medium rounded-md text-sm px-5 py-2.5 me-2 mb-2 w-full">Add to Cart</button>
+                <button
+                  v-if="isInCart(game.id)"
+                  @click="viewCart"
+                  class="text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 font-medium rounded-md text-sm px-5 py-2.5 me-2 mb-2 w-full"
+                >
+                  View in Cart
+                </button>
+                <button v-else v-if="isLoggedIn" @click="addToCart()" type="button" class="text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 font-medium rounded-md text-sm px-5 py-2.5 me-2 mb-2 w-full">Add to Cart</button>
               </div>
             </div>
           </div>

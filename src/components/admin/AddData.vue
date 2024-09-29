@@ -1,8 +1,10 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import axios from 'axios';
-import Multiselect from 'vue-multiselect'
-import 'vue-multiselect/dist/vue-multiselect.min.css'
+import Multiselect from 'vue-multiselect';
+import 'vue-multiselect/dist/vue-multiselect.min.css';
+import { onSnapshot, collection, doc, setDoc, deleteDoc } from 'firebase/firestore';
+import { storage, db } from '../../vue-firebase-auth'; // Firebase config
 
 // Game form data
 const newGame = ref({
@@ -29,33 +31,31 @@ const games = ref([]);
 // Modal state to control success modal visibility
 const showSuccessModal = ref(false);
 
-// Fetch list of games
-const fetchGames = async () => {
-  try {
-    const response = await axios.get(
-      'https://firestore.googleapis.com/v1/projects/my-project-1-e56ef/databases/(default)/documents/games'
-    );
-    games.value = response.data.documents.map(doc => ({
-      id: doc.name.split('/').pop(),
-      fulltitle: doc.fields?.fulltitle?.stringValue || '',
-      title: doc.fields?.title?.stringValue || 'No Title',
-      minititle: doc.fields?.minititle?.stringValue || 'No Minititle',
-      type: doc.fields?.type?.stringValue || '',
-      description: doc.fields?.description?.stringValue || 'No Description',
-      image: doc.fields?.image?.stringValue || '',
-      images: doc.fields?.images?.arrayValue?.values?.map(val => val.stringValue) || [],
-      price: doc.fields?.price?.doubleValue || 0,
-      video: doc.fields?.video?.stringValue || '',
-      thumbnail: doc.fields?.thumbnail?.stringValue || '',
-      logo: doc.fields?.logo?.stringValue || '',
-      discount: doc.fields?.discount?.integerValue || 0,
-      rating: doc.fields?.rating?.doubleValue || 0,
-      availableOn: doc.fields?.availableOn?.arrayValue?.values?.map(val => val.stringValue) || [],
-      genres: doc.fields?.genres?.arrayValue?.values?.map(val => val.stringValue) || []
+// Set up Firestore real-time listener
+const setupGameListener = () => {
+  const gamesCollection = collection(db, 'games'); // Reference to 'games' collection in Firestore
+
+  // Listen for real-time updates
+  onSnapshot(gamesCollection, (snapshot) => {
+    games.value = snapshot.docs.map(doc => ({
+      id: doc.id,
+      fulltitle: doc.data().fulltitle || '',
+      title: doc.data().title || 'No Title',
+      minititle: doc.data().minititle || 'No Minititle',
+      type: doc.data().type || '',
+      description: doc.data().description || 'No Description',
+      image: doc.data().image || '',
+      images: doc.data().images || [],
+      price: doc.data().price || 0,
+      video: doc.data().video || '',
+      thumbnail: doc.data().thumbnail || '',
+      logo: doc.data().logo || '',
+      discount: doc.data().discount || 0,
+      rating: doc.data().rating || 0,
+      availableOn: doc.data().availableOn || [],
+      genres: doc.data().genres || []
     }));
-  } catch (error) {
-    console.error('Error fetching games:', error);
-  }
+  });
 };
 
 // Save or update game
@@ -67,53 +67,45 @@ const saveGame = async () => {
       return;
     }
 
+    const gameDoc = doc(db, 'games', newGame.value.id || undefined); // Use the provided ID for updates or generate a new ID
+
     const payload = {
-      fields: {
-        fulltitle: {stringValue: newGame.value.fulltitle},
-        title: { stringValue: newGame.value.title },
-        description: { stringValue: newGame.value.description },
-        image: { stringValue: newGame.value.image },
-        images: { arrayValue: { values: newGame.value.images.map(image => ({ stringValue: image })) } },
-        thumbnail: { stringValue: newGame.value.thumbnail },
-        minititle: { stringValue: newGame.value.minititle },
-        type: { stringValue: newGame.value.type },
-        price: { doubleValue: parseFloat(newGame.value.price) },
-        video: { stringValue: newGame.value.video },
-        logo: { stringValue: newGame.value.logo },
-        discount: { integerValue: parseInt(newGame.value.discount, 10) },
-        rating: { doubleValue: parseFloat(newGame.value.rating) },
-        availableOn: { arrayValue: { values: newGame.value.availableOn.map(item => ({ stringValue: item.trim() })) } },
-        genres: { arrayValue: { values: newGame.value.genres.map(item => ({ stringValue: item.trim() })) } }
-      }
+      fulltitle: newGame.value.fulltitle,
+      title: newGame.value.title,
+      description: newGame.value.description,
+      image: newGame.value.image,
+      images: newGame.value.images,
+      thumbnail: newGame.value.thumbnail,
+      minititle: newGame.value.minititle,
+      type: newGame.value.type,
+      price: parseFloat(newGame.value.price),
+      video: newGame.value.video,
+      logo: newGame.value.logo,
+      discount: parseInt(newGame.value.discount, 10),
+      rating: parseFloat(newGame.value.rating),
+      availableOn: newGame.value.availableOn,
+      genres: newGame.value.genres
     };
 
-    const url = newGame.value.id
-      ? `https://firestore.googleapis.com/v1/projects/my-project-1-e56ef/databases/(default)/documents/games/${newGame.value.id}`
-      : 'https://firestore.googleapis.com/v1/projects/my-project-1-e56ef/databases/(default)/documents/games';
+    // Save the game to Firestore (merge if updating)
+    await setDoc(gameDoc, payload, { merge: true });
 
-    const method = newGame.value.id ? 'patch' : 'post';
-
-    await axios[method](url, payload);
-
-    fetchGames(); // Refresh games list after saving
-    resetForm();  // Reset form input
+    resetForm(); // Reset form input
 
     // Show success modal when game is saved successfully
     showSuccessModal.value = true;
 
   } catch (error) {
     // Log full error details for debugging
-    console.error('Error saving game:', error.response ? error.response.data : error);
+    console.error('Error saving game:', error);
   }
 };
 
 // Delete game
 const deleteGame = async (id) => {
   try {
-    await axios.delete(
-      `https://firestore.googleapis.com/v1/projects/my-project-1-e56ef/databases/(default)/documents/games/${id}`
-    );
-    fetchGames(); // Refresh list after deletion
+    const gameDoc = doc(db, 'games', id);
+    await deleteDoc(gameDoc); // Delete the game document from Firestore
   } catch (error) {
     console.error('Error deleting game:', error);
   }
@@ -145,27 +137,30 @@ const editGame = (game) => {
 const resetForm = () => {
   newGame.value = {
     id: '',
-    fulltitle:'',
+    fulltitle: '',
     title: '',
     minititle: '',
     type: '',
     description: '',
     image: '',
-    images: ['', '', ''], // Reset array fields
+    images: ['', '', '', ''],
     thumbnail: '',
     price: '',
     video: '',
     logo: '',
     discount: 0,
     rating: 0,
-    availableOn: '', // Reset to empty string
-    genres: '' // Reset to empty string
+    availableOn: '',
+    genres: ''
   };
 };
 
 // Fetch games on mount
-fetchGames();
+onMounted(() => {
+  setupGameListener(); // Setup the real-time listener
+});
 </script>
+
 
 <template>
   <div class="ms-56 pt-24 px-5">

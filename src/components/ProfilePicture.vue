@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, onSnapshot } from 'firebase/firestore';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { storage, db } from '../vue-firebase-auth'; // Import Firebase configuration
 
@@ -62,31 +62,31 @@ const uploadImage = async () => {
   });
 };
 
-// Fungsi untuk mengambil gambar profil dari Firestore
-const fetchProfileImage = async () => {
-  if (!user.value) {
-    // alert("Anda belum login!");
-    return;
-  }
+// Fungsi untuk memantau gambar profil secara real-time menggunakan onSnapshot
+const watchProfileImage = () => {
+  if (!user.value) return;
 
-  console.log("Fetching profile image for UID:", user.value.uid);
+  console.log("Watching profile image for UID:", user.value.uid);
   const userDoc = doc(db, "users", user.value.uid); // Referensi ke dokumen user di Firestore
-  const docSnapshot = await getDoc(userDoc); // Ambil dokumen user
 
-  if (docSnapshot.exists()) {
-    profileImage.value = docSnapshot.data().profileImage || profileImage.value; // Update gambar profil jika ada
-  } else {
-    console.log("No profile image found, using default.");
-  }
+  // Menggunakan onSnapshot untuk memantau perubahan di Firestore secara real-time
+  onSnapshot(userDoc, (docSnapshot) => {
+    if (docSnapshot.exists()) {
+      profileImage.value = docSnapshot.data().profileImage || profileImage.value; // Update gambar profil jika ada perubahan
+      console.log("Profile image updated in real-time:", profileImage.value);
+    } else {
+      console.log("No profile image found, using default.");
+    }
+  });
 };
 
-// Fungsi untuk menginisialisasi pengguna
+// Fungsi untuk menginisialisasi pengguna dan mulai memantau gambar profil
 const initUser = () => {
   const auth = getAuth();
   onAuthStateChanged(auth, (currentUser) => {
     if (currentUser) {
       user.value = currentUser;
-      fetchProfileImage(); // Ambil gambar profil setelah user login
+      watchProfileImage(); // Pantau perubahan gambar profil secara real-time
     } else {
       user.value = null;
       profileImage.value = new URL('../assets/default.png', import.meta.url).href; // Reset ke gambar default jika tidak ada yang login
@@ -107,20 +107,26 @@ const props = defineProps({
   },
   uploadEnabled: {
     type: Boolean,
-    default: true // Menentukan apakah input dan tombol "Upload" akan ditampilkan
+    default: true 
+  },
+  imgEnabled: {
+    type: Boolean,
+    default: true 
   }
 });
 </script>
 
 <template>
-  <div class="flex flex-col items-center">
-    <div :class="[$attrs.class, 'w-32 h-32 rounded-full object-cover']" >
+  <div>
+    <div :class="[$attrs.class, 'w-32 h-32 rounded-full object-cover']">
       <!-- Menampilkan gambar profil -->
-      <img :src="profileImage" alt="Profile Picture" :class="[$attrs.class, 'w-full h-full rounded-full object-cover']" />
+      <img :src="profileImage" alt="Profile Picture" :class="[$attrs.class, 'w-full h-full rounded-full object-cover border-none']" v-if="imgEnabled" />
     </div>
     <!-- Input untuk memilih file gambar -->
-    <input v-if="uploadEnabled" type="file" @change="onFileChange" class="text-sm" />
-    <!-- Tombol untuk mengunggah gambar -->
-    <button v-if="uploadEnabled" @click="uploadImage" class="bg-blue-500 text-white px-4 py-2 rounded mt-4">Upload</button>
+    <div class="flex flex-col mt-3 gap-1">
+      <input v-if="uploadEnabled" type="file" @change="onFileChange" class="text-sm rounded" />
+      <!-- Tombol untuk mengunggah gambar -->
+      <button v-if="uploadEnabled" @click="uploadImage" class="text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium  px-4 py-2 rounded">Upload</button>
+    </div>
   </div>
 </template>

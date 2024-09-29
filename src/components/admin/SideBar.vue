@@ -33,6 +33,7 @@ onMounted(() => {
                   <span class="flex-1 ms-3 text-left rtl:text-right whitespace-nowrap">Add Data</span>
             </router-link>
          </li>
+         
          <li>
             <router-link to="/checkout" class="flex items-center p-2 text-gray-900 rounded-lg hover:bg-gray-10 group relative">
                 <span :class="{ 'indicator absolute -left-5 w-1.5 h-full bg-[#302F41] rounded-e-sm': route.path === '/checkout',
